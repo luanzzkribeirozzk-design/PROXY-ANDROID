@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -21,6 +22,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".PairingReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.hgcheats.app.ACTION_SET_CODE" />
+                <action android:name="com.hgcheats.app.ACTION_SET_PORT" />
+                <action android:name="com.hgcheats.app.ACTION_CONNECT" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".PairingService"
+            android:exported="false" />
     </application>
 
 </manifest>
