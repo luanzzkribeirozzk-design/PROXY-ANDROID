@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="background_dark">#0A0A0A</color>
+    <color name="card_dark">#121212</color>
+    <color name="blue_primary">#0D47A1</color>
+    <color name="blue_accent">#1976D2</color>
+    <color name="gray_text">#888888</color>
+    <color name="offline_dot">#2196F3</color>
+    <color name="online_dot">#4CAF50</color>
+</resources>
