@@ -14,7 +14,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="| CONFIGURAÇÃO"
+            android:text="| DEPURAÇÃO WI-FI"
             android:textColor="@color/blue_accent"
             android:textStyle="bold" />
 
@@ -22,7 +22,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Ative a permissão para injetar o proxy"
+            android:text="Parear o celular consigo mesmo via ADB"
             android:textColor="@color/gray_text"
             android:textSize="12sp" />
 
@@ -43,7 +43,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:drawablePadding="8dp"
-                    android:text="Verificando..."
+                    android:text="Aguardando..."
                     android:textColor="@color/blue_accent"
                     app:drawableStartCompat="@drawable/ic_dot_offline" />
 
@@ -61,7 +61,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="COMO ATIVAR"
+            android:text="COMO PAREAR"
             android:textColor="@color/blue_accent"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -70,22 +70,50 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Opção 1 — Via ADB (sem root):\n1. Ative a Depuração USB nas opções de desenvolvedor\n2. Conecte o celular ao PC via USB ou Wi-Fi\n3. Execute no PC:\n\nadb shell pm grant com.hgcheats.app android.permission.WRITE_SECURE_SETTINGS\n\nOpção 2 — Root:\nSe o celular tiver root, a injeção funciona automaticamente."
+            android:text="1. Configurações → Opções do desenvolvedor\n2. Ative 'Depuração Wi-Fi'\n3. Toque em 'Parear dispositivo com código'\n4. Anote o código de 6 dígitos e a PORTA mostrada\n5. Digite abaixo e toque em PAREAR"
             android:textColor="@color/gray_text"
             android:textSize="11sp" />
 
-        <!-- Campos ocultos mantidos para compatibilidade com código existente -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="CÓDIGO DE PAREAMENTO"
+            android:textColor="@color/gray_text"
+            android:textSize="10sp" />
+
         <EditText
             android:id="@+id/et_pairing_code"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:visibility="gone" />
+            android:layout_height="60dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_edittext"
+            android:gravity="center"
+            android:hint="Ex: 123456"
+            android:inputType="number"
+            android:maxLength="6"
+            android:textColor="@color/white"
+            android:textColorHint="@color/gray_text" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="PORTA (mostrada na tela de pareamento)"
+            android:textColor="@color/gray_text"
+            android:textSize="10sp" />
 
         <EditText
             android:id="@+id/et_port"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:visibility="gone" />
+            android:layout_height="60dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_edittext"
+            android:gravity="center"
+            android:hint="Ex: 37681"
+            android:inputType="number"
+            android:textColor="@color/white"
+            android:textColorHint="@color/gray_text" />
 
         <Button
             android:id="@+id/btn_pair_submit"
@@ -93,7 +121,7 @@
             android:layout_height="60dp"
             android:layout_marginTop="32dp"
             android:backgroundTint="@color/blue_primary"
-            android:text="JÁ CONCEDI — VERIFICAR"
+            android:text="PAREAR E INJETAR"
             android:textColor="@color/white"
             app:cornerRadius="12dp" />
 
