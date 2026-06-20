@@ -1,152 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:background="@color/background_dark"
-    android:orientation="vertical"
     android:padding="20dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="| PAREAMENTO ADB"
-        android:textColor="@color/blue_accent"
-        android:textStyle="bold" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Conecte com a depuracao wi-fi"
-        android:textColor="@color/gray_text"
-        android:textSize="12sp" />
-
-    <androidx.cardview.widget.CardView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        app:cardBackgroundColor="@color/card_dark"
-        app:cardCornerRadius="12dp">
+        android:orientation="vertical">
 
-        <RelativeLayout
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="| CONFIGURAÇÃO"
+            android:textColor="@color/blue_accent"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Ative a permissão para injetar o proxy"
+            android:textColor="@color/gray_text"
+            android:textSize="12sp" />
+
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="16dp">
+            android:layout_marginTop="24dp"
+            app:cardBackgroundColor="@color/card_dark"
+            app:cardCornerRadius="12dp">
 
-            <TextView
-                android:id="@+id/tv_adb_status"
-                android:layout_width="wrap_content"
+            <RelativeLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:drawablePadding="8dp"
-                android:text="Desconectado"
-                android:textColor="@color/blue_accent"
-                app:drawableStartCompat="@drawable/ic_dot_offline" />
+                android:padding="16dp">
 
-            <TextView
-                android:id="@+id/tv_local_ip"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:text="192.168.0.4"
-                android:textColor="@color/gray_text" />
-        </RelativeLayout>
-    </androidx.cardview.widget.CardView>
+                <TextView
+                    android:id="@+id/tv_adb_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:drawablePadding="8dp"
+                    android:text="Verificando..."
+                    android:textColor="@color/blue_accent"
+                    app:drawableStartCompat="@drawable/ic_dot_offline" />
 
-    <Button
-        android:id="@+id/btn_pair_notification"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:layout_marginTop="24dp"
-        android:backgroundTint="@color/card_dark"
-        android:text="PAREAR COM NOTIFICAÇÕES"
-        android:textColor="@color/white"
-        app:cornerRadius="12dp"
-        app:strokeColor="@color/blue_accent"
-        app:strokeWidth="1dp" />
+                <TextView
+                    android:id="@+id/tv_local_ip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:textColor="@color/gray_text" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="24dp"
-        android:text="ou manual"
-        android:textColor="@color/gray_text"
-        android:textSize="12sp" />
+            </RelativeLayout>
+        </androidx.cardview.widget.CardView>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="CODIGO DE PAREAMENTO"
-        android:textColor="@color/gray_text"
-        android:textSize="10sp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="COMO ATIVAR"
+            android:textColor="@color/blue_accent"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
-    <EditText
-        android:id="@+id/et_pairing_code"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/bg_edittext"
-        android:gravity="center"
-        android:hint="Ex: 123456"
-        android:inputType="number"
-        android:textColor="@color/white"
-        android:textColorHint="@color/gray_text" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Opção 1 — Via ADB (sem root):\n1. Ative a Depuração USB nas opções de desenvolvedor\n2. Conecte o celular ao PC via USB ou Wi-Fi\n3. Execute no PC:\n\nadb shell pm grant com.hgcheats.app android.permission.WRITE_SECURE_SETTINGS\n\nOpção 2 — Root:\nSe o celular tiver root, a injeção funciona automaticamente."
+            android:textColor="@color/gray_text"
+            android:textSize="11sp" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="PORTA (ex: 37681)"
-        android:textColor="@color/gray_text"
-        android:textSize="10sp" />
+        <!-- Campos ocultos mantidos para compatibilidade com código existente -->
+        <EditText
+            android:id="@+id/et_pairing_code"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:visibility="gone" />
 
-    <EditText
-        android:id="@+id/et_port"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/bg_edittext"
-        android:gravity="center"
-        android:hint="Ex: 37681"
-        android:inputType="number"
-        android:textColor="@color/white"
-        android:textColorHint="@color/gray_text" />
+        <EditText
+            android:id="@+id/et_port"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:visibility="gone" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="A porta aparece ao lado do IP na tela de pareamento"
-        android:textColor="@color/gray_text"
-        android:textSize="10sp" />
+        <Button
+            android:id="@+id/btn_pair_submit"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginTop="32dp"
+            android:backgroundTint="@color/blue_primary"
+            android:text="JÁ CONCEDI — VERIFICAR"
+            android:textColor="@color/white"
+            app:cornerRadius="12dp" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="COMO USAR"
-        android:textColor="@color/blue_accent"
-        android:textSize="12sp"
-        android:textStyle="bold" />
+        <Button
+            android:id="@+id/btn_pair_notification"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="@color/card_dark"
+            android:text="FECHAR"
+            android:textColor="@color/white"
+            app:cornerRadius="12dp"
+            app:strokeColor="@color/blue_accent"
+            app:strokeWidth="1dp" />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="1. Configurações > Opções do desenvolvedor\n2. Ative 'Depuração sem fio'\n3. Toque em 'Depuração sem fio' > 'Parear dispositivo com código'\n4. Anote o código de 6 dígitos e a PORTA mostrada\n5. Digite aqui e toque em PAREAR"
-        android:textColor="@color/gray_text"
-        android:textSize="11sp" />
-
-    <Button
-        android:id="@+id/btn_pair_submit"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:layout_marginTop="32dp"
-        android:backgroundTint="@color/blue_primary"
-        android:text="PAREAR"
-        android:textColor="@color/white"
-        app:cornerRadius="12dp" />
-
-</LinearLayout>
+    </LinearLayout>
+</ScrollView>

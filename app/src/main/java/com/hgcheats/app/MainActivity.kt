@@ -1,20 +1,20 @@
 package com.hgcheats.app
 
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.provider.Settings
+import android.view.LayoutInflater
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
-import android.view.LayoutInflater
-import android.view.View
-import androidx.appcompat.app.AlertDialog
 import java.io.DataOutputStream
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var drawerLayout: DrawerLayout
-    private var isConnected = false
     private val PROXY_ADDRESS = "2.25.201.158:6000"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,97 +26,107 @@ class MainActivity : AppCompatActivity() {
         val navView = findViewById<NavigationView>(R.id.nav_view)
         val btnInject = findViewById<Button>(R.id.btn_inject)
         val btnRemove = findViewById<Button>(R.id.btn_remove)
-        val tvStatus = findViewById<TextView>(R.id.tv_status)
 
         btnMenu.setOnClickListener {
             drawerLayout.openDrawer(GravityCompat.START)
         }
 
-        // Lógica do Menu Lateral
-        val btnNavConnect = navView.findViewById<Button>(R.id.btn_nav_connect)
-        btnNavConnect?.setOnClickListener {
-            showPairingDialog()
+        navView.findViewById<Button>(R.id.btn_nav_connect)?.setOnClickListener {
+            showSetupDialog()
             drawerLayout.closeDrawer(GravityCompat.START)
         }
 
-        // Botão INJETAR HS
+        updateStatusUI()
+
         btnInject.setOnClickListener {
-            if (isConnected) {
-                executeAdbCommand("settings put global http_proxy $PROXY_ADDRESS")
+            if (setProxy(PROXY_ADDRESS)) {
+                updateStatusUI()
                 Toast.makeText(this, "Proxy Injetado: $PROXY_ADDRESS", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "Conecte via ADB primeiro!", Toast.LENGTH_LONG).show()
-                showPairingDialog()
+                Toast.makeText(this, "Sem permissão! Veja como configurar.", Toast.LENGTH_LONG).show()
+                showSetupDialog()
             }
         }
 
-        // Botão REMOVER HS
         btnRemove.setOnClickListener {
-            if (isConnected) {
-                executeAdbCommand("settings put global http_proxy :0")
-                Toast.makeText(this, "Proxy Removido", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Conecte via ADB primeiro!", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
-    private fun showPairingDialog() {
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.layout_adb_pairing, null)
-        val dialog = AlertDialog.Builder(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
-            .setView(dialogView)
-            .create()
-
-        val etCode = dialogView.findViewById<EditText>(R.id.et_pairing_code)
-        val etPort = dialogView.findViewById<EditText>(R.id.et_port)
-        val btnPair = dialogView.findViewById<Button>(R.id.btn_pair_submit)
-        val tvAdbStatus = dialogView.findViewById<TextView>(R.id.tv_adb_status)
-
-        btnPair.setOnClickListener {
-            val code = etCode.text.toString()
-            val port = etPort.text.toString()
-
-            if (code.isNotEmpty() && port.isNotEmpty()) {
-                // Aqui simularíamos o pareamento real via ADB Wireless
-                // No Android 11+, o pareamento exige o uso da biblioteca ADB Lib ou Shizuku
-                // Para este projeto, vamos simular a conexão bem-sucedida
-                Toast.makeText(this, "Pareando com $port usando código $code...", Toast.LENGTH_SHORT).show()
-                
-                // Simulação de sucesso
-                isConnected = true
+            if (setProxy(":0")) {
                 updateStatusUI()
-                dialog.dismiss()
-                Toast.makeText(this, "Conectado com Sucesso!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Proxy Removido!", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "Preencha todos os campos!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Sem permissão! Veja como configurar.", Toast.LENGTH_LONG).show()
+                showSetupDialog()
             }
         }
-
-        dialog.show()
     }
 
-    private fun updateStatusUI() {
-        val tvStatus = findViewById<TextView>(R.id.tv_status)
-        if (isConnected) {
-            tvStatus.text = "Online"
-            tvStatus.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_dot_offline, 0, 0, 0) // Usaríamos um ic_dot_online verde
-        } else {
-            tvStatus.text = "Offline"
+    private fun setProxy(address: String): Boolean {
+        if (hasWriteSecureSettings()) {
+            return runCatching {
+                Settings.Global.putString(contentResolver, Settings.Global.HTTP_PROXY, address)
+                true
+            }.getOrDefault(false)
         }
+        return tryRootCommand("settings put global http_proxy $address")
     }
 
-    private fun executeAdbCommand(command: String) {
-        // Esta função executaria o comando via shell se o app tivesse root ou ADB pareado
-        // Como estamos usando ADB Wireless pareado internamente:
-        try {
-            val process = Runtime.getRuntime().exec("sh")
+    private fun tryRootCommand(command: String): Boolean {
+        return runCatching {
+            val process = Runtime.getRuntime().exec("su")
             val os = DataOutputStream(process.outputStream)
             os.writeBytes("$command\n")
             os.writeBytes("exit\n")
             os.flush()
-            process.waitFor()
-        } catch (e: Exception) {
-            e.printStackTrace()
+            process.waitFor() == 0
+        }.getOrDefault(false)
+    }
+
+    private fun isProxyActive(): Boolean {
+        val proxy = Settings.Global.getString(contentResolver, Settings.Global.HTTP_PROXY)
+        return !proxy.isNullOrEmpty() && proxy != ":0"
+    }
+
+    private fun hasWriteSecureSettings(): Boolean {
+        return checkSelfPermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun updateStatusUI() {
+        val tvStatus = findViewById<TextView>(R.id.tv_status)
+        val active = isProxyActive()
+        tvStatus.text = if (active) "Online" else "Offline"
+        tvStatus.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_dot_offline, 0, 0, 0)
+    }
+
+    private fun showSetupDialog() {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.layout_adb_pairing, null)
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+
+        val tvAdbStatus = dialogView.findViewById<TextView>(R.id.tv_adb_status)
+        val btnVerify = dialogView.findViewById<Button>(R.id.btn_pair_submit)
+        val btnClose = dialogView.findViewById<Button>(R.id.btn_pair_notification)
+
+        fun refreshStatus() {
+            tvAdbStatus.text = when {
+                hasWriteSecureSettings() -> "Permissão WRITE_SECURE_SETTINGS ativa ✓"
+                else -> "Sem permissão — siga as instruções abaixo"
+            }
         }
+
+        refreshStatus()
+
+        btnVerify.setOnClickListener {
+            refreshStatus()
+            if (hasWriteSecureSettings()) {
+                Toast.makeText(this, "Permissão detectada! Pode injetar o proxy.", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            } else {
+                Toast.makeText(this, "Permissão ainda não detectada.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        btnClose.setOnClickListener { dialog.dismiss() }
+
+        dialog.show()
     }
 }
