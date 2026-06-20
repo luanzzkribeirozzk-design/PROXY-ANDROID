@@ -24,7 +24,7 @@ jobs:
       run: ./gradlew assembleDebug --stacktrace
 
     - name: Upload APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: LN_Proxy_Canva_APK
         path: app/build/outputs/apk/debug/app-debug.apk
