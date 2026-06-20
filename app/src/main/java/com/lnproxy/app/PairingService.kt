@@ -6,38 +6,31 @@ import android.os.IBinder
 import dadb.AdbKeyPair
 import dadb.Dadb
 import kotlinx.coroutines.*
+import java.io.File
 
 class PairingService : Service() {
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val keyPair = AdbKeyPair.generate()
     private val PROXY_ADDRESS = "2.25.201.158:6000"
+
+    private val keyPair: AdbKeyPair by lazy {
+        val priv = File(filesDir, "adbkey")
+        val pub  = File(filesDir, "adbkey.pub")
+        if (!priv.exists()) AdbKeyPair.generate(priv, pub)
+        AdbKeyPair.read(priv, pub)
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val code = intent?.getStringExtra("code") ?: return START_NOT_STICKY
-        val port = intent.getIntExtra("port", 0).takeIf { it != 0 } ?: return START_NOT_STICKY
+        val port = intent?.getIntExtra("port", 0)?.takeIf { it != 0 } ?: return START_NOT_STICKY
 
         scope.launch {
             try {
-                PairingNotificationManager.updateStatus(applicationContext, "Pareando...")
-
-                Dadb.pair("127.0.0.1", port, code)
-
-                val dadb = withTimeoutOrNull(12_000L) {
-                    var conn: Dadb? = null
-                    while (conn == null) {
-                        conn = runCatching { Dadb.discover("127.0.0.1", keyPair) }.getOrNull()
-                        if (conn == null) delay(1000)
-                    }
-                    conn
-                } ?: throw Exception("Servidor ADB não encontrado")
-
+                PairingNotificationManager.updateStatus(applicationContext, "Conectando...")
+                val dadb = Dadb.create("127.0.0.1", port, keyPair)
                 dadb.shell("settings put global http_proxy $PROXY_ADDRESS")
                 dadb.close()
-
-                PairingReceiver.pendingCode = null
                 PairingReceiver.pendingPort = null
                 PairingNotificationManager.cancel(applicationContext)
                 sendBroadcast(Intent("com.lnproxy.app.PROXY_INJECTED"))

@@ -26,7 +26,6 @@ class PairingReceiver : BroadcastReceiver() {
                 if (!code.isNullOrEmpty()) {
                     pendingCode = code
                     PairingNotificationManager.update(context)
-                    tryConnect(context)
                 }
             }
             ACTION_SET_PORT -> {
@@ -43,11 +42,9 @@ class PairingReceiver : BroadcastReceiver() {
     }
 
     private fun tryConnect(context: Context) {
-        val code = pendingCode?.takeIf { it.length == 6 } ?: return
         val port = pendingPort ?: return
         context.startService(
             Intent(context, PairingService::class.java)
-                .putExtra("code", code)
                 .putExtra("port", port)
         )
     }

@@ -24,16 +24,22 @@ import dadb.AdbKeyPair
 import dadb.Dadb
 import kotlinx.coroutines.*
 import java.io.DataOutputStream
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var drawerLayout: DrawerLayout
     private val PROXY_ADDRESS = "2.25.201.158:6000"
-    private val adbKeyPair: AdbKeyPair by lazy { AdbKeyPair.generate() }
+
+    private val adbKeyPair: AdbKeyPair by lazy {
+        val priv = File(filesDir, "adbkey")
+        val pub  = File(filesDir, "adbkey.pub")
+        if (!priv.exists()) AdbKeyPair.generate(priv, pub)
+        AdbKeyPair.read(priv, pub)
+    }
 
     private var isPairing = false
 
-    // Recebe confirmação do PairingService quando a injeção via notificação terminar
     private val proxyInjectedReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             updateStatusUI()
@@ -75,39 +81,29 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    // ── Auto-connect para modo dividir tela ────────────────────────────────
     private fun setupAutoConnect() {
-        val etCode = findViewById<EditText>(R.id.et_main_code)
-        val etPort = findViewById<EditText>(R.id.et_main_port)
-        val tvStatus = findViewById<TextView>(R.id.tv_pairing_status)
+        val etPort    = findViewById<EditText>(R.id.et_main_port)
+        val tvStatus  = findViewById<TextView>(R.id.tv_pairing_status)
 
-        val watcher = object : TextWatcher {
+        etPort.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                val code = etCode.text.toString().trim()
                 val port = etPort.text.toString().trim().toIntOrNull()
-
                 when {
-                    isPairing -> { /* aguarda */ }
-                    code.length == 6 && port != null -> {
+                    isPairing  -> { /* aguarda */ }
+                    port != null -> {
                         tvStatus.text = "Conectando..."
-                        pairAndInject(code, port, tvStatus)
+                        connectAndInject(port, tvStatus)
                     }
-                    code.isEmpty() && port == null -> tvStatus.text = "Aguardando código e porta..."
-                    code.length < 6 -> tvStatus.text = "Código: ${code.length}/6 dígitos"
-                    port == null -> tvStatus.text = "Insira a porta"
+                    else -> tvStatus.text = "Insira a porta da Depuração Wi-Fi"
                 }
             }
-        }
-
-        etCode.addTextChangedListener(watcher)
-        etPort.addTextChangedListener(watcher)
+        })
     }
 
-    // ── Dialog: escolha de método de pareamento ────────────────────────────
     private fun showPairingMethodDialog() {
-        val view = LayoutInflater.from(this).inflate(R.layout.layout_adb_pairing, null)
+        val view   = LayoutInflater.from(this).inflate(R.layout.layout_adb_pairing, null)
         val dialog = AlertDialog.Builder(this).setView(view).create()
 
         view.findViewById<Button>(R.id.btn_option_notification).setOnClickListener {
@@ -117,10 +113,8 @@ class MainActivity : AppCompatActivity() {
 
         view.findViewById<Button>(R.id.btn_option_splitscreen).setOnClickListener {
             dialog.dismiss()
-            toast("Divida a tela e preencha o código e porta — conecta automaticamente!")
-            // Rola até o card de pareamento
-            findViewById<androidx.cardview.widget.CardView>(R.id.card_pairing)
-                .requestFocus()
+            toast("Divida a tela, vá em Configurações › Opções do Desenvolvedor › Depuração Wi-Fi e insira a porta.")
+            findViewById<androidx.cardview.widget.CardView>(R.id.card_pairing).requestFocus()
         }
 
         view.findViewById<Button>(R.id.btn_pair_notification).setOnClickListener {
@@ -130,7 +124,6 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    // ── Notificação persistente ────────────────────────────────────────────
     private fun requestNotifPermissionAndSend() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
@@ -143,7 +136,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         PairingNotificationManager.send(this)
-        toast("Notificação enviada — insira código e porta na notificação")
+        toast("Notificação enviada — insira a porta na notificação")
     }
 
     override fun onRequestPermissionsResult(
@@ -152,27 +145,19 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 100 && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
             PairingNotificationManager.send(this)
-            toast("Notificação enviada — insira código e porta na notificação")
+            toast("Notificação enviada — insira a porta na notificação")
         }
     }
 
-    // ── Pareamento ADB + injeção ───────────────────────────────────────────
-    private fun pairAndInject(code: String, port: Int, tvStatus: TextView? = null) {
+    private fun connectAndInject(port: Int, tvStatus: TextView? = null) {
         if (isPairing) return
         isPairing = true
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                Dadb.pair("127.0.0.1", port, code)
-
-                val dadb = withTimeoutOrNull(12_000L) {
-                    var conn: Dadb? = null
-                    while (conn == null) {
-                        conn = runCatching { Dadb.discover("127.0.0.1", adbKeyPair) }.getOrNull()
-                        if (conn == null) delay(1000)
-                    }
-                    conn
-                } ?: throw Exception("Servidor ADB não encontrado.\nVerifique se a Depuração Wi-Fi está ativa.")
+                val dadb = withTimeoutOrNull(15_000L) {
+                    Dadb.create("127.0.0.1", port, adbKeyPair)
+                } ?: throw Exception("Timeout — verifique se a Depuração Wi-Fi está ativa na porta $port.")
 
                 dadb.shell("settings put global http_proxy $PROXY_ADDRESS")
                 dadb.close()
@@ -192,7 +177,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ── Injeção via Settings API ou root ──────────────────────────────────
     private fun applyProxy(address: String) {
         val label = if (address == ":0") "Removido" else "Injetado"
 
