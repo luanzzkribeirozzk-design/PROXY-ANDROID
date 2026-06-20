@@ -1,4 +1,4 @@
-package com.hgcheats.app
+package com.lnproxy.app
 
 import android.app.NotificationChannel
 import android.app.NotificationManager

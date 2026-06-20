@@ -1,4 +1,4 @@
-package com.hgcheats.app
+package com.lnproxy.app
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -8,9 +8,9 @@ import androidx.core.app.RemoteInput
 class PairingReceiver : BroadcastReceiver() {
 
     companion object {
-        const val ACTION_SET_CODE = "com.hgcheats.app.ACTION_SET_CODE"
-        const val ACTION_SET_PORT = "com.hgcheats.app.ACTION_SET_PORT"
-        const val ACTION_CONNECT  = "com.hgcheats.app.ACTION_CONNECT"
+        const val ACTION_SET_CODE = "com.lnproxy.app.ACTION_SET_CODE"
+        const val ACTION_SET_PORT = "com.lnproxy.app.ACTION_SET_PORT"
+        const val ACTION_CONNECT  = "com.lnproxy.app.ACTION_CONNECT"
         const val KEY_CODE = "key_code"
         const val KEY_PORT = "key_port"
 

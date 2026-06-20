@@ -27,9 +27,9 @@
             android:name=".PairingReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.hgcheats.app.ACTION_SET_CODE" />
-                <action android:name="com.hgcheats.app.ACTION_SET_PORT" />
-                <action android:name="com.hgcheats.app.ACTION_CONNECT" />
+                <action android:name="com.lnproxy.app.ACTION_SET_CODE" />
+                <action android:name="com.lnproxy.app.ACTION_SET_PORT" />
+                <action android:name="com.lnproxy.app.ACTION_CONNECT" />
             </intent-filter>
         </receiver>
 

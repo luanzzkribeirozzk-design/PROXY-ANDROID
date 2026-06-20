@@ -1,4 +1,4 @@
-package com.hgcheats.app
+package com.lnproxy.app
 
 import android.app.Service
 import android.content.Intent
@@ -40,7 +40,7 @@ class PairingService : Service() {
                 PairingReceiver.pendingCode = null
                 PairingReceiver.pendingPort = null
                 PairingNotificationManager.cancel(applicationContext)
-                sendBroadcast(Intent("com.hgcheats.app.PROXY_INJECTED"))
+                sendBroadcast(Intent("com.lnproxy.app.PROXY_INJECTED"))
             } catch (e: Exception) {
                 PairingNotificationManager.updateStatus(
                     applicationContext, "Erro: ${e.message?.take(60)}"

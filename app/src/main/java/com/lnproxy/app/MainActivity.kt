@@ -1,4 +1,4 @@
-package com.hgcheats.app
+package com.lnproxy.app
 
 import android.Manifest
 import android.content.BroadcastReceiver
@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
 
         registerReceiver(
             proxyInjectedReceiver,
-            IntentFilter("com.hgcheats.app.PROXY_INJECTED")
+            IntentFilter("com.lnproxy.app.PROXY_INJECTED")
         )
     }
 

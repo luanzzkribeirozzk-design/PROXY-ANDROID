@@ -2,11 +2,11 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
-    namespace 'com.hgcheats.app'
+    namespace 'com.lnproxy.app'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.hgcheats.app"
+        applicationId "com.lnproxy.app"
         minSdk 26
         targetSdk 34
         versionCode 1
