@@ -29,11 +29,10 @@ object PairingNotificationManager {
     fun cancel(context: Context) = notifyManager(context).cancel(NOTIF_ID)
 
     private fun build(context: Context, statusOverride: String? = null): android.app.Notification {
-        val code = PairingReceiver.pendingCode
         val port = PairingReceiver.pendingPort
 
         val contentText = statusOverride
-            ?: "${if (code != null) "Código ✓" else "Código: —"}  |  ${if (port != null) "Porta ✓" else "Porta: —"}"
+            ?: if (port != null) "Porta: $port ✓ — toque em CONECTAR" else "Insira a porta da Depuração Wi-Fi"
 
         val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
@@ -43,22 +42,9 @@ object PairingNotificationManager {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         else PendingIntent.FLAG_UPDATE_CURRENT
 
-        // Action: Inserir Código
-        val codeInput = RemoteInput.Builder(PairingReceiver.KEY_CODE)
-            .setLabel("Código de 6 dígitos")
-            .build()
-        val codePi = PendingIntent.getBroadcast(
-            context, 10,
-            Intent(PairingReceiver.ACTION_SET_CODE, null, context, PairingReceiver::class.java),
-            flags
-        )
-        val codeAction = NotificationCompat.Action.Builder(
-            0, if (code != null) "Código ✓" else "📝 Inserir Código", codePi
-        ).addRemoteInput(codeInput).build()
-
         // Action: Inserir Porta
         val portInput = RemoteInput.Builder(PairingReceiver.KEY_PORT)
-            .setLabel("Porta (ex: 37681)")
+            .setLabel("Porta principal ADB (ex: 37681)")
             .build()
         val portPi = PendingIntent.getBroadcast(
             context, 11,
@@ -79,12 +65,11 @@ object PairingNotificationManager {
 
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_menu_manage)
-            .setContentTitle("Depuração Wi-Fi — Aguardando dados")
+            .setContentTitle("Depuração Wi-Fi")
             .setContentText(contentText)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .addAction(codeAction)
             .addAction(portAction)
             .addAction(connectAction)
             .build()

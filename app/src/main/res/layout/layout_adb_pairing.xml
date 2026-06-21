@@ -3,83 +3,72 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/background_dark"
+    android:background="@color/card_dark"
     android:orientation="vertical"
     android:padding="24dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="| COMO DESEJA PAREAR?"
+        android:text="| COMO CONECTAR?"
         android:textColor="@color/blue_accent"
         android:textStyle="bold" />
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Escolha o método de pareamento via Depuração Wi-Fi"
+        android:text="Escolha o método para informar a porta da Depuração Wi-Fi:"
         android:textColor="@color/gray_text"
         android:textSize="12sp" />
 
-    <!-- Opção: Notificação -->
     <Button
         android:id="@+id/btn_option_notification"
         android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:layout_marginTop="28dp"
+        android:layout_height="56dp"
+        android:layout_marginTop="24dp"
         android:backgroundTint="@color/blue_primary"
-        android:text="🔔  NOTIFICAÇÃO"
+        android:text="Via Notificação"
         android:textColor="@color/white"
-        android:textSize="15sp"
-        app:cornerRadius="14dp" />
+        app:cornerRadius="12dp" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="6dp"
         android:gravity="center"
-        android:text="Envia uma notificação persistente onde você insere\no código e porta sem precisar abrir o app"
+        android:text="Envia uma notificação onde você digita a porta"
         android:textColor="@color/gray_text"
         android:textSize="11sp" />
 
-    <!-- Opção: Dividir Tela -->
     <Button
         android:id="@+id/btn_option_splitscreen"
         android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:layout_marginTop="20dp"
+        android:layout_height="56dp"
+        android:layout_marginTop="16dp"
         android:backgroundTint="@color/card_dark"
-        android:text="⊡  DIVIDIR TELA"
+        android:text="Via Dividir Tela"
         android:textColor="@color/white"
-        android:textSize="15sp"
-        app:cornerRadius="14dp"
+        app:cornerRadius="12dp"
         app:strokeColor="@color/blue_accent"
         app:strokeWidth="1dp" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="6dp"
         android:gravity="center"
-        android:text="Mostra os campos na tela principal. Divida\na tela manualmente e preencha código e porta —\nconecta automaticamente ao completar"
+        android:text="Abre split-screen e você digita a porta no campo abaixo"
         android:textColor="@color/gray_text"
         android:textSize="11sp" />
 
     <Button
         android:id="@+id/btn_pair_notification"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="48dp"
         android:layout_marginTop="24dp"
         android:background="@android:color/transparent"
-        android:text="Fechar"
+        android:text="Cancelar"
         android:textColor="@color/gray_text" />
-
-    <!-- Campos ocultos mantidos para compatibilidade -->
-    <EditText android:id="@+id/et_pairing_code" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
-    <EditText android:id="@+id/et_port" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
-    <Button android:id="@+id/btn_pair_submit" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
-    <TextView android:id="@+id/tv_adb_status" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
-    <TextView android:id="@+id/tv_local_ip" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
 
 </LinearLayout>
