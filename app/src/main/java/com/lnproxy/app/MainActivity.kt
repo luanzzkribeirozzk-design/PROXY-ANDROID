@@ -2,12 +2,15 @@ package com.lnproxy.app
 
 import android.Manifest
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.provider.Settings
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -37,9 +40,41 @@ class MainActivity : AppCompatActivity() {
 
     private var isPairing = false
 
+    // ── Shizuku UserService ───────────────────────────────────────────────────
+
+    private var proxyService: IProxyService? = null
+    private var userServiceBound = false
+
+    private val userServiceArgs by lazy {
+        Shizuku.UserServiceArgs(
+            ComponentName(packageName, ProxyUserService::class.java.name)
+        ).daemon(false).processNameSuffix("proxy").version(1)
+    }
+
+    private val userServiceConn = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
+            proxyService = IProxyService.Stub.asInterface(binder)
+        }
+        override fun onServiceDisconnected(name: ComponentName?) {
+            proxyService = null
+        }
+    }
+
+    private fun bindShizukuService() {
+        if (userServiceBound || !hasShizukuPermission()) return
+        runCatching {
+            Shizuku.bindUserService(userServiceArgs, userServiceConn)
+            userServiceBound = true
+        }
+    }
+
+    // ── Permission listeners ──────────────────────────────────────────────────
+
     private val shizukuPermissionListener = Shizuku.OnRequestPermissionResultListener { _, result ->
         if (result == PackageManager.PERMISSION_GRANTED) {
             toast("Shizuku autorizado! Toque em INJETAR.")
+            bindShizukuService()
+            updateShizukuStatus()
         } else {
             toast("Permissão do Shizuku negada.")
         }
@@ -85,6 +120,10 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener)
         unregisterReceiver(proxyInjectedReceiver)
+        if (userServiceBound) {
+            runCatching { Shizuku.unbindUserService(userServiceArgs, userServiceConn, false) }
+            userServiceBound = false
+        }
         super.onDestroy()
     }
 
@@ -131,10 +170,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun runShizukuCommand(cmd: String): Boolean {
-        return runCatching {
-            val process = Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)
-            process.waitFor() == 0
-        }.getOrDefault(false)
+        val svc = proxyService ?: return false
+        return runCatching { svc.exec(cmd) == 0 }.getOrDefault(false)
     }
 
     private fun updateShizukuStatus() {
@@ -142,7 +179,10 @@ class MainActivity : AppCompatActivity() {
         when {
             !isShizukuAvailable() -> tvStatus.text = "Shizuku: não iniciado"
             !hasShizukuPermission() -> tvStatus.text = "Shizuku ativo — toque em CONECTAR para autorizar"
-            else -> tvStatus.text = "Shizuku pronto ✓ — pode injetar!"
+            else -> {
+                tvStatus.text = "Shizuku pronto ✓ — pode injetar!"
+                bindShizukuService()
+            }
         }
     }
 
@@ -285,6 +325,7 @@ class MainActivity : AppCompatActivity() {
             REQ_SHIZUKU -> {
                 if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
                     toast("Shizuku autorizado! Toque em INJETAR.")
+                    bindShizukuService()
                     updateShizukuStatus()
                 } else {
                     toast("Permissão do Shizuku negada.")
