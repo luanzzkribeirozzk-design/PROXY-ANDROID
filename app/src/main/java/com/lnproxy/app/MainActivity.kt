@@ -18,6 +18,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import dadb.AdbKeyPair
 import dadb.Dadb
 import kotlinx.coroutines.*
+import rikka.shizuku.Shizuku
 import java.io.DataOutputStream
 import java.io.File
 
@@ -25,6 +26,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var drawerLayout: DrawerLayout
     private val PROXY_ADDRESS = "2.25.201.158:6000"
+    private val REQ_SHIZUKU = 201
 
     private val adbKeyPair: AdbKeyPair by lazy {
         val priv = File(filesDir, "adbkey")
@@ -34,6 +36,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var isPairing = false
+
+    private val shizukuPermissionListener = Shizuku.OnRequestPermissionResultListener { _, result ->
+        if (result == PackageManager.PERMISSION_GRANTED) {
+            toast("Shizuku autorizado! Toque em INJETAR.")
+        } else {
+            toast("Permissão do Shizuku negada.")
+        }
+    }
 
     private val proxyInjectedReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -46,6 +56,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        Shizuku.addRequestPermissionResultListener(shizukuPermissionListener)
+
         drawerLayout = findViewById(R.id.drawer_layout)
 
         findViewById<ImageButton>(R.id.btn_menu).setOnClickListener {
@@ -57,6 +69,7 @@ class MainActivity : AppCompatActivity() {
 
         setupDrawer()
         updateStatusUI()
+        updateShizukuStatus()
 
         registerReceiver(
             proxyInjectedReceiver,
@@ -64,7 +77,13 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    override fun onResume() {
+        super.onResume()
+        updateShizukuStatus()
+    }
+
     override fun onDestroy() {
+        Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener)
         unregisterReceiver(proxyInjectedReceiver)
         super.onDestroy()
     }
@@ -75,7 +94,7 @@ class MainActivity : AppCompatActivity() {
 
         btnConnect.setOnClickListener {
             if (isPairing) return@setOnClickListener
-            tvStatus.text = "Procurando porta ADB... Se aparecer um diálogo, toque em Permitir"
+            tvStatus.text = "Procurando porta ADB... Se aparecer diálogo, toque em Permitir"
             drawerLayout.closeDrawer(GravityCompat.START)
             autoConnectAndInject(tvStatus)
         }
@@ -86,7 +105,49 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Reads listening high-ports from the kernel's TCP tables without needing root.
+    // ── Shizuku ──────────────────────────────────────────────────────────────
+
+    private fun isShizukuAvailable(): Boolean = runCatching { Shizuku.pingBinder() }.getOrDefault(false)
+
+    private fun hasShizukuPermission(): Boolean {
+        if (!isShizukuAvailable()) return false
+        return if (Shizuku.isPreV11() || Shizuku.getVersion() < 11) {
+            checkSelfPermission("moe.shizuku.manager.permission.API_V23") == PackageManager.PERMISSION_GRANTED
+        } else {
+            Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    private fun requestShizukuPermission() {
+        if (Shizuku.isPreV11() || Shizuku.getVersion() < 11) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf("moe.shizuku.manager.permission.API_V23"),
+                REQ_SHIZUKU
+            )
+        } else {
+            Shizuku.requestPermission(REQ_SHIZUKU)
+        }
+    }
+
+    private fun runShizukuCommand(cmd: String): Boolean {
+        return runCatching {
+            val process = Shizuku.newProcess(arrayOf("sh", "-c", cmd), null, null)
+            process.waitFor() == 0
+        }.getOrDefault(false)
+    }
+
+    private fun updateShizukuStatus() {
+        val tvStatus = findViewById<TextView>(R.id.tv_pairing_status)
+        when {
+            !isShizukuAvailable() -> tvStatus.text = "Shizuku: não iniciado"
+            !hasShizukuPermission() -> tvStatus.text = "Shizuku ativo — toque em CONECTAR para autorizar"
+            else -> tvStatus.text = "Shizuku pronto ✓ — pode injetar!"
+        }
+    }
+
+    // ── Auto-scan ADB port via /proc/net ─────────────────────────────────────
+
     private fun getListeningHighPorts(): List<Int> {
         val ports = mutableSetOf<Int>()
         for (path in listOf("/proc/net/tcp6", "/proc/net/tcp")) {
@@ -94,7 +155,6 @@ class MainActivity : AppCompatActivity() {
                 File(path).bufferedReader().useLines { lines ->
                     lines.drop(1).forEach { line ->
                         val parts = line.trim().split("\\s+".toRegex())
-                        // state 0A = TCP_LISTEN
                         if (parts.size >= 4 && parts[3] == "0A") {
                             val portHex = parts[1].substringAfterLast(":")
                             portHex.toIntOrNull(16)?.let { port ->
@@ -130,8 +190,6 @@ class MainActivity : AppCompatActivity() {
 
                 for (port in ports) {
                     try {
-                        // 30s: enough time for the "Allow ADB debugging?" dialog to appear and be tapped.
-                        // Wrong ports (pairing port, other services) fail in < 1s due to protocol mismatch.
                         val dadb = withTimeoutOrNull(30_000L) {
                             Dadb.create("127.0.0.1", port, adbKeyPair)
                         } ?: continue
@@ -144,9 +202,9 @@ class MainActivity : AppCompatActivity() {
                             dadb.shell("settings put global http_proxy $PROXY_ADDRESS")
                             dadb.close()
                             withContext(Dispatchers.Main) {
-                                tvStatus.text = "Conectado ✓ — proxy injetado! (porta $port)"
+                                tvStatus.text = "Conectado ✓ proxy injetado! (porta $port)"
                                 updateStatusUI()
-                                toast("Proxy Injetado via Depuração Wi-Fi!")
+                                toast("Proxy Injetado via ADB!")
                             }
                             return@launch
                         }
@@ -164,6 +222,41 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    // ── Proxy injection (Shizuku → root → ADB) ───────────────────────────────
+
+    private fun applyProxy(address: String) {
+        val label = if (address == ":0") "Removido" else "Injetado"
+
+        // 1. WRITE_SECURE_SETTINGS (granted via ADB once)
+        if (hasWriteSecureSettings()) {
+            runCatching { Settings.Global.putString(contentResolver, Settings.Global.HTTP_PROXY, address) }
+                .onSuccess { updateStatusUI(); toast("Proxy $label!"); return }
+        }
+
+        // 2. Shizuku
+        if (isShizukuAvailable()) {
+            if (!hasShizukuPermission()) {
+                requestShizukuPermission()
+                toast("Autorize o Shizuku e tente novamente.")
+                return
+            }
+            if (runShizukuCommand("settings put global http_proxy $address")) {
+                updateStatusUI(); toast("Proxy $label via Shizuku!"); return
+            }
+        }
+
+        // 3. Root
+        if (tryRootCommand("settings put global http_proxy $address")) {
+            updateStatusUI(); toast("Proxy $label via Root!"); return
+        }
+
+        // 4. ADB wireless (fallback)
+        toast("Inicie o Shizuku ou use o menu → CONECTAR.")
+        drawerLayout.openDrawer(GravityCompat.START)
+    }
+
+    // ── Notification pairing ──────────────────────────────────────────────────
 
     private fun requestNotifPermissionAndSend() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -184,27 +277,23 @@ class MainActivity : AppCompatActivity() {
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 100 && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
-            PairingNotificationManager.send(this)
-            toast("Notificação enviada — insira a porta na notificação")
+        when (requestCode) {
+            100 -> if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                PairingNotificationManager.send(this)
+                toast("Notificação enviada")
+            }
+            REQ_SHIZUKU -> {
+                if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                    toast("Shizuku autorizado! Toque em INJETAR.")
+                    updateShizukuStatus()
+                } else {
+                    toast("Permissão do Shizuku negada.")
+                }
+            }
         }
     }
 
-    private fun applyProxy(address: String) {
-        val label = if (address == ":0") "Removido" else "Injetado"
-
-        if (hasWriteSecureSettings()) {
-            runCatching { Settings.Global.putString(contentResolver, Settings.Global.HTTP_PROXY, address) }
-                .onSuccess { updateStatusUI(); toast("Proxy $label!"); return }
-        }
-
-        if (tryRootCommand("settings put global http_proxy $address")) {
-            updateStatusUI(); toast("Proxy $label via Root!"); return
-        }
-
-        toast("Abra o menu lateral e toque em CONECTAR.")
-        drawerLayout.openDrawer(GravityCompat.START)
-    }
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private fun hasWriteSecureSettings() =
         checkSelfPermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED
