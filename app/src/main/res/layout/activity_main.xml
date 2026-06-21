@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/background_dark">
 
+    <!-- Conteúdo principal -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -140,81 +141,14 @@
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
-                <!-- Card de Pareamento Wi-Fi -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/card_pairing"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    app:cardBackgroundColor="@color/card_dark"
-                    app:cardCornerRadius="16dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="20dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="| DEPURAÇÃO WI-FI"
-                            android:textColor="@color/blue_accent"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="Use a PORTA principal da Depuração Wi-Fi (não a porta de pareamento)"
-                            android:textColor="@color/gray_text"
-                            android:textSize="12sp" />
-
-                        <EditText
-                            android:id="@+id/et_main_port"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:layout_marginTop="16dp"
-                            android:background="@drawable/bg_edittext"
-                            android:gravity="center"
-                            android:hint="Porta (ex: 37681)"
-                            android:inputType="number"
-                            android:textColor="@color/white"
-                            android:textColorHint="@color/gray_text" />
-
-                        <Button
-                            android:id="@+id/btn_connect_adb"
-                            android:layout_width="match_parent"
-                            android:layout_height="55dp"
-                            android:layout_marginTop="12dp"
-                            android:backgroundTint="@color/blue_primary"
-                            android:text="CONECTAR"
-                            android:textColor="@color/white"
-                            app:cornerRadius="12dp" />
-
-                        <TextView
-                            android:id="@+id/tv_pairing_status"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:gravity="center"
-                            android:text="Insira a porta e toque em CONECTAR"
-                            android:textColor="@color/gray_text"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
             </LinearLayout>
         </ScrollView>
-
     </LinearLayout>
 
     <!-- Menu Lateral (Drawer) -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
-        android:layout_width="wrap_content"
+        android:layout_width="300dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:background="@color/background_dark">
@@ -230,18 +164,76 @@
                 android:layout_height="wrap_content"
                 android:text="LN PROXY"
                 android:textColor="@color/blue_accent"
+                android:textSize="18sp"
                 android:textStyle="bold" />
 
-            <Button
-                android:id="@+id/btn_nav_connect"
+            <!-- Seção Depuração Wi-Fi -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:text="| DEPURAÇÃO WI-FI"
+                android:textColor="@color/blue_accent"
+                android:textStyle="bold" />
+
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="40dp"
+                android:layout_marginTop="6dp"
+                android:text="Use a PORTA principal (não a porta de pareamento)"
+                android:textColor="@color/gray_text"
+                android:textSize="11sp" />
+
+            <EditText
+                android:id="@+id/et_main_port"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_edittext"
+                android:gravity="center"
+                android:hint="Porta (ex: 37681)"
+                android:inputType="number"
+                android:textColor="@color/white"
+                android:textColorHint="@color/gray_text"
+                android:textSize="18sp" />
+
+            <Button
+                android:id="@+id/btn_connect_adb"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="@color/blue_primary"
+                android:text="CONECTAR"
+                android:textColor="@color/white"
+                app:cornerRadius="10dp" />
+
+            <TextView
+                android:id="@+id/tv_pairing_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Insira a porta e toque em CONECTAR"
+                android:textColor="@color/gray_text"
+                android:textSize="11sp" />
+
+            <!-- Divisória -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="20dp"
+                android:background="#333333" />
+
+            <!-- Notificação -->
+            <Button
+                android:id="@+id/btn_nav_notify"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
                 android:background="@android:color/transparent"
                 android:drawableStart="@drawable/ic_connect"
-                android:drawablePadding="16dp"
+                android:drawablePadding="12dp"
                 android:gravity="start|center_vertical"
-                android:text="Conectar"
+                android:text="Conectar via Notificação"
                 android:textAllCaps="false"
                 android:textColor="@color/white" />
 
@@ -249,14 +241,28 @@
                 android:id="@+id/btn_nav_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="4dp"
                 android:background="@android:color/transparent"
                 android:drawableStart="@drawable/ic_info"
-                android:drawablePadding="16dp"
+                android:drawablePadding="12dp"
                 android:gravity="start|center_vertical"
                 android:text="Info"
                 android:textAllCaps="false"
                 android:textColor="@color/white" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <Button
+                android:id="@+id/btn_logout"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:backgroundTint="@color/blue_primary"
+                android:text="Sair da conta"
+                android:textColor="@color/white"
+                app:cornerRadius="8dp" />
 
         </LinearLayout>
     </com.google.android.material.navigation.NavigationView>

@@ -9,15 +9,12 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.view.LayoutInflater
 import android.widget.*
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
-import com.google.android.material.navigation.NavigationView
 import dadb.AdbKeyPair
 import dadb.Dadb
 import kotlinx.coroutines.*
@@ -55,17 +52,10 @@ class MainActivity : AppCompatActivity() {
             drawerLayout.openDrawer(GravityCompat.START)
         }
 
-        findViewById<NavigationView>(R.id.nav_view)
-            .findViewById<Button>(R.id.btn_nav_connect)
-            ?.setOnClickListener {
-                showPairingMethodDialog()
-                drawerLayout.closeDrawer(GravityCompat.START)
-            }
-
         findViewById<Button>(R.id.btn_inject).setOnClickListener { applyProxy(PROXY_ADDRESS) }
         findViewById<Button>(R.id.btn_remove).setOnClickListener { applyProxy(":0") }
 
-        setupConnectButton()
+        setupDrawer()
         updateStatusUI()
 
         registerReceiver(
@@ -79,10 +69,11 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    private fun setupConnectButton() {
-        val etPort   = findViewById<EditText>(R.id.et_main_port)
-        val tvStatus = findViewById<TextView>(R.id.tv_pairing_status)
+    private fun setupDrawer() {
+        val etPort     = findViewById<EditText>(R.id.et_main_port)
+        val tvStatus   = findViewById<TextView>(R.id.tv_pairing_status)
         val btnConnect = findViewById<Button>(R.id.btn_connect_adb)
+
         btnConnect.setOnClickListener {
             val port = etPort.text.toString().trim().toIntOrNull()
             if (port == null) {
@@ -90,30 +81,14 @@ class MainActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             tvStatus.text = "Conectando... Se aparecer um diálogo, toque em Permitir"
+            drawerLayout.closeDrawer(GravityCompat.START)
             connectAndInject(port, tvStatus)
         }
-    }
 
-    private fun showPairingMethodDialog() {
-        val view   = LayoutInflater.from(this).inflate(R.layout.layout_adb_pairing, null)
-        val dialog = AlertDialog.Builder(this).setView(view).create()
-
-        view.findViewById<Button>(R.id.btn_option_notification).setOnClickListener {
-            dialog.dismiss()
+        findViewById<Button>(R.id.btn_nav_notify).setOnClickListener {
+            drawerLayout.closeDrawer(GravityCompat.START)
             requestNotifPermissionAndSend()
         }
-
-        view.findViewById<Button>(R.id.btn_option_splitscreen).setOnClickListener {
-            dialog.dismiss()
-            toast("Divida a tela, vá em Configurações › Opções do Desenvolvedor › Depuração Wi-Fi e insira a porta.")
-            findViewById<androidx.cardview.widget.CardView>(R.id.card_pairing).requestFocus()
-        }
-
-        view.findViewById<Button>(R.id.btn_pair_notification).setOnClickListener {
-            dialog.dismiss()
-        }
-
-        dialog.show()
     }
 
     private fun requestNotifPermissionAndSend() {
@@ -162,6 +137,7 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     tvStatus?.text = "Erro: ${e.message?.take(80)}"
+                    drawerLayout.openDrawer(GravityCompat.START)
                 }
             } finally {
                 isPairing = false
@@ -181,8 +157,8 @@ class MainActivity : AppCompatActivity() {
             updateStatusUI(); toast("Proxy $label via Root!"); return
         }
 
-        toast("Conecte via Depuração Wi-Fi para injetar.")
-        showPairingMethodDialog()
+        toast("Abra o menu lateral e conecte via Depuração Wi-Fi.")
+        drawerLayout.openDrawer(GravityCompat.START)
     }
 
     private fun hasWriteSecureSettings() =
