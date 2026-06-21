@@ -146,10 +146,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    app:cardBackgroundColor="@color/card_dark"
-                    app:cardCornerRadius="16dp"
                     android:focusable="true"
-                    android:focusableInTouchMode="true">
+                    android:focusableInTouchMode="true"
+                    app:cardBackgroundColor="@color/card_dark"
+                    app:cardCornerRadius="16dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -168,7 +168,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="Ative a Depuração Wi-Fi e insira a porta mostrada na tela do dispositivo."
+                            android:text="Use a PORTA principal da Depuração Wi-Fi (não a porta de pareamento)"
                             android:textColor="@color/gray_text"
                             android:textSize="12sp" />
 
@@ -184,13 +184,23 @@
                             android:textColor="@color/white"
                             android:textColorHint="@color/gray_text" />
 
+                        <Button
+                            android:id="@+id/btn_connect_adb"
+                            android:layout_width="match_parent"
+                            android:layout_height="55dp"
+                            android:layout_marginTop="12dp"
+                            android:backgroundTint="@color/blue_primary"
+                            android:text="CONECTAR"
+                            android:textColor="@color/white"
+                            app:cornerRadius="12dp" />
+
                         <TextView
                             android:id="@+id/tv_pairing_status"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="12dp"
                             android:gravity="center"
-                            android:text="Insira a porta da Depuração Wi-Fi"
+                            android:text="Insira a porta e toque em CONECTAR"
                             android:textColor="@color/gray_text"
                             android:textSize="12sp" />
                     </LinearLayout>

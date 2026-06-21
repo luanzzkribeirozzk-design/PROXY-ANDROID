@@ -9,8 +9,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
@@ -67,7 +65,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btn_inject).setOnClickListener { applyProxy(PROXY_ADDRESS) }
         findViewById<Button>(R.id.btn_remove).setOnClickListener { applyProxy(":0") }
 
-        setupAutoConnect()
+        setupConnectButton()
         updateStatusUI()
 
         registerReceiver(
@@ -81,25 +79,19 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    private fun setupAutoConnect() {
-        val etPort    = findViewById<EditText>(R.id.et_main_port)
-        val tvStatus  = findViewById<TextView>(R.id.tv_pairing_status)
-
-        etPort.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                val port = etPort.text.toString().trim().toIntOrNull()
-                when {
-                    isPairing  -> { /* aguarda */ }
-                    port != null -> {
-                        tvStatus.text = "Conectando..."
-                        connectAndInject(port, tvStatus)
-                    }
-                    else -> tvStatus.text = "Insira a porta da Depuração Wi-Fi"
-                }
+    private fun setupConnectButton() {
+        val etPort   = findViewById<EditText>(R.id.et_main_port)
+        val tvStatus = findViewById<TextView>(R.id.tv_pairing_status)
+        val btnConnect = findViewById<Button>(R.id.btn_connect_adb)
+        btnConnect.setOnClickListener {
+            val port = etPort.text.toString().trim().toIntOrNull()
+            if (port == null) {
+                tvStatus.text = "Insira uma porta válida"
+                return@setOnClickListener
             }
-        })
+            tvStatus.text = "Conectando... Se aparecer um diálogo, toque em Permitir"
+            connectAndInject(port, tvStatus)
+        }
     }
 
     private fun showPairingMethodDialog() {
@@ -155,7 +147,7 @@ class MainActivity : AppCompatActivity() {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val dadb = withTimeoutOrNull(15_000L) {
+                val dadb = withTimeoutOrNull(30_000L) {
                     Dadb.create("127.0.0.1", port, adbKeyPair)
                 } ?: throw Exception("Timeout — verifique se a Depuração Wi-Fi está ativa na porta $port.")
 
