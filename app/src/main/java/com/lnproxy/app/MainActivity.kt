@@ -70,24 +70,98 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupDrawer() {
-        val etPort     = findViewById<EditText>(R.id.et_main_port)
         val tvStatus   = findViewById<TextView>(R.id.tv_pairing_status)
         val btnConnect = findViewById<Button>(R.id.btn_connect_adb)
 
         btnConnect.setOnClickListener {
-            val port = etPort.text.toString().trim().toIntOrNull()
-            if (port == null) {
-                tvStatus.text = "Insira uma porta válida"
-                return@setOnClickListener
-            }
-            tvStatus.text = "Conectando... Se aparecer um diálogo, toque em Permitir"
+            if (isPairing) return@setOnClickListener
+            tvStatus.text = "Procurando porta ADB... Se aparecer um diálogo, toque em Permitir"
             drawerLayout.closeDrawer(GravityCompat.START)
-            connectAndInject(port, tvStatus)
+            autoConnectAndInject(tvStatus)
         }
 
         findViewById<Button>(R.id.btn_nav_notify).setOnClickListener {
             drawerLayout.closeDrawer(GravityCompat.START)
             requestNotifPermissionAndSend()
+        }
+    }
+
+    // Reads listening high-ports from the kernel's TCP tables without needing root.
+    private fun getListeningHighPorts(): List<Int> {
+        val ports = mutableSetOf<Int>()
+        for (path in listOf("/proc/net/tcp6", "/proc/net/tcp")) {
+            try {
+                File(path).bufferedReader().useLines { lines ->
+                    lines.drop(1).forEach { line ->
+                        val parts = line.trim().split("\\s+".toRegex())
+                        // state 0A = TCP_LISTEN
+                        if (parts.size >= 4 && parts[3] == "0A") {
+                            val portHex = parts[1].substringAfterLast(":")
+                            portHex.toIntOrNull(16)?.let { port ->
+                                if (port in 10_000..65_535) ports.add(port)
+                            }
+                        }
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+        return ports.toList().sortedDescending()
+    }
+
+    private fun autoConnectAndInject(tvStatus: TextView) {
+        if (isPairing) return
+        isPairing = true
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val ports = getListeningHighPorts()
+
+                if (ports.isEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        tvStatus.text = "Nenhuma porta encontrada — ative a Depuração Wi-Fi."
+                        drawerLayout.openDrawer(GravityCompat.START)
+                    }
+                    return@launch
+                }
+
+                withContext(Dispatchers.Main) {
+                    tvStatus.text = "Testando ${ports.size} portas... Se aparecer diálogo, toque em Permitir"
+                }
+
+                for (port in ports) {
+                    try {
+                        // 30s: enough time for the "Allow ADB debugging?" dialog to appear and be tapped.
+                        // Wrong ports (pairing port, other services) fail in < 1s due to protocol mismatch.
+                        val dadb = withTimeoutOrNull(30_000L) {
+                            Dadb.create("127.0.0.1", port, adbKeyPair)
+                        } ?: continue
+
+                        val result = withTimeoutOrNull(5_000L) {
+                            runCatching { dadb.shell("echo adb_ok").allOutput }.getOrNull()
+                        }
+
+                        if (result?.contains("adb_ok") == true) {
+                            dadb.shell("settings put global http_proxy $PROXY_ADDRESS")
+                            dadb.close()
+                            withContext(Dispatchers.Main) {
+                                tvStatus.text = "Conectado ✓ — proxy injetado! (porta $port)"
+                                updateStatusUI()
+                                toast("Proxy Injetado via Depuração Wi-Fi!")
+                            }
+                            return@launch
+                        }
+
+                        runCatching { dadb.close() }
+                    } catch (_: Exception) { continue }
+                }
+
+                withContext(Dispatchers.Main) {
+                    tvStatus.text = "Porta ADB não encontrada. Verifique a Depuração Wi-Fi."
+                    drawerLayout.openDrawer(GravityCompat.START)
+                }
+            } finally {
+                isPairing = false
+            }
         }
     }
 
@@ -116,35 +190,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun connectAndInject(port: Int, tvStatus: TextView? = null) {
-        if (isPairing) return
-        isPairing = true
-
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val dadb = withTimeoutOrNull(30_000L) {
-                    Dadb.create("127.0.0.1", port, adbKeyPair)
-                } ?: throw Exception("Timeout — verifique se a Depuração Wi-Fi está ativa na porta $port.")
-
-                dadb.shell("settings put global http_proxy $PROXY_ADDRESS")
-                dadb.close()
-
-                withContext(Dispatchers.Main) {
-                    tvStatus?.text = "Conectado ✓ — proxy injetado!"
-                    updateStatusUI()
-                    toast("Proxy Injetado via Depuração Wi-Fi!")
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    tvStatus?.text = "Erro: ${e.message?.take(80)}"
-                    drawerLayout.openDrawer(GravityCompat.START)
-                }
-            } finally {
-                isPairing = false
-            }
-        }
-    }
-
     private fun applyProxy(address: String) {
         val label = if (address == ":0") "Removido" else "Injetado"
 
@@ -157,7 +202,7 @@ class MainActivity : AppCompatActivity() {
             updateStatusUI(); toast("Proxy $label via Root!"); return
         }
 
-        toast("Abra o menu lateral e conecte via Depuração Wi-Fi.")
+        toast("Abra o menu lateral e toque em CONECTAR.")
         drawerLayout.openDrawer(GravityCompat.START)
     }
 

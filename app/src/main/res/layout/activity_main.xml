@@ -167,7 +167,7 @@
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
-            <!-- Seção Depuração Wi-Fi -->
+            <!-- Seção Conectar -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -180,28 +180,15 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:text="Use a PORTA principal (não a porta de pareamento)"
+                android:text="Ative a Depuração Wi-Fi nas Opções do Desenvolvedor e toque em CONECTAR. Se aparecer um diálogo de autorização, toque em Permitir."
                 android:textColor="@color/gray_text"
                 android:textSize="11sp" />
-
-            <EditText
-                android:id="@+id/et_main_port"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_edittext"
-                android:gravity="center"
-                android:hint="Porta (ex: 37681)"
-                android:inputType="number"
-                android:textColor="@color/white"
-                android:textColorHint="@color/gray_text"
-                android:textSize="18sp" />
 
             <Button
                 android:id="@+id/btn_connect_adb"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="10dp"
+                android:layout_height="52dp"
+                android:layout_marginTop="16dp"
                 android:backgroundTint="@color/blue_primary"
                 android:text="CONECTAR"
                 android:textColor="@color/white"
@@ -211,8 +198,8 @@
                 android:id="@+id/tv_pairing_status"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Insira a porta e toque em CONECTAR"
+                android:layout_marginTop="10dp"
+                android:text="Toque em CONECTAR para iniciar"
                 android:textColor="@color/gray_text"
                 android:textSize="11sp" />
 
@@ -223,7 +210,6 @@
                 android:layout_marginTop="20dp"
                 android:background="#333333" />
 
-            <!-- Notificação -->
             <Button
                 android:id="@+id/btn_nav_notify"
                 android:layout_width="match_parent"
